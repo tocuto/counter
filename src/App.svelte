@@ -1,99 +1,60 @@
 <script lang="ts">
-  import viteLogo from '/revolve.svg'
-
-  let spinFrequency = 30;
-  let flashFrequency = 30;
-
-  $: spinFrequencySeconds = (spinFrequency / 60).toFixed(2);
-  $: flashFrequencySeconds = (flashFrequency / 60).toFixed(2);
-
-  let nextFlash;
-  let rotation;
-  let lastFrame;
-
-  function calculateRotationAt(elapsed: number) {
-    return (rotation + elapsed / (60_000 / spinFrequency) * 360) % 360
-  }
-
-  function flash() {
-    const elapsed = nextFlash - lastFrame;
-    nextFlash += 60_000 / flashFrequency;
-
-    const rot = calculateRotationAt(elapsed);
-    const elem = document.getElementById("flash");
-    elem.style.transform = `rotate(${rot}deg)`;
-  }
-
-  function frame(time: number) {
-    if (lastFrame === undefined)
-      lastFrame = time;
-    if (rotation === undefined)
-      rotation = 0;
-    if (nextFlash === undefined) {
-      setTimeout(() => {
-        nextFlash = null;
-      }, 2000);
-      nextFlash = null;
+import { Progressbar } from 'flowbite-svelte';
+const start = new Date("2024-01-09T06:00:00Z");
+const end = new Date("2024-03-03T20:35:00Z");
+const total = end - start;
+let time = "";
+let progress = "";
+let precision = 0;
+const precisions = {
+    20: 1,
+    25: 2,
+    30: 3,
+    34: 4,
+    37: 5,
+    40: 6,
+}
+const updateTime = () => {
+    let delta = end - new Date(new Date().toISOString());
+    delta = delta / 1000; // seconds
+    let seconds = Math.floor(delta % 60);
+    let minutes = Math.floor(delta / 60 % 60);
+    let hours = Math.floor(delta / 3600 % 24);
+    let days = Math.floor(delta / 86400);
+    if (seconds < 10) { seconds = "0" + seconds; }
+    if (minutes < 10) { minutes = "0" + minutes; }
+    if (hours < 10) { hours = "0" + hours; }
+    time = days + "d " + hours + ":" + minutes + ":" + seconds;
+}
+const updateProgress = () => {
+    const now = new Date(new Date().toISOString());
+    let percent = (now - start) / total * 100;
+    progress = percent.toString();
+    precision = 0;
+    for (const [threshold, prec] of Object.entries(precisions)) {
+        if (percent > threshold && prec > precision) {
+            precision = prec;
+        }
     }
-
-    if (nextFlash === null)
-      nextFlash = time;
-    const elapsed = time - lastFrame;
-    if (time >= nextFlash)
-      flash();
-  
-    lastFrame = time;
-
-    rotation = calculateRotationAt(elapsed);
-    const elem = document.getElementById("spin");
-    elem.style.transform = `rotate(${rotation}deg)`;
-
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
+    updateTime();
+}
+updateProgress();
+setInterval(updateProgress, 100);
 </script>
 
-<main>
-  <div>
-    <img
-      src={viteLogo}
-      id="flash"
-      class="spinner"
-      alt="Spinner Estroboscopio" />
-    <img
-      src={viteLogo}
-      id="spin"
-      class="spinner"
-      alt="Spinner Normal" />
-  </div>
-  <h1>Estroboscopio</h1>
-
-  <div class="card">
-    <label>
-      <input type="range" min="30" max="120" bind:value={spinFrequency} /><br />
-      <span style='font-size: 2rem'>{spinFrequency} rpm ({spinFrequencySeconds} rps)</span><br /><br />
-    </label>
-
-    <label>
-      <input type="range" min="30" max="120" bind:value={flashFrequency} /><br />
-      <span style='font-size: 2rem'>{flashFrequency} fpm ({flashFrequencySeconds} Hz)</span><br />
-    </label>
-
-    <br />
-    <button on:click={() => flashFrequency = spinFrequency}>Igualar</button>
-  </div>
+<main class="w-full">
+<h1>{time}</h1>
+<div class="my-b4 w-full">
+<Progressbar
+{progress}
+size="h-6"
+color="indigo"
+animate
+{precision}
+labelInside
+labelInsideClass="font-medium rounded-full"
+class="h-6"
+/>
+</div>
 </main>
 
-<style>
-  .spinner {
-    height: 6em;
-    padding: 1.5em;
-    /* animation: spin var(--duration) linear infinite; */
-  }
-
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-</style>
