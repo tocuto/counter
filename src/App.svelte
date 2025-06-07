@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Progressbar } from 'flowbite-svelte';
-const start = new Date("2024-01-09T06:00:00Z");
-const end = new Date("2024-03-03T20:35:00Z");
+const start = new Date("2025-08-08T13:35:00Z");
+const end = new Date("2025-06-07T19:35:00Z");
 const total = end - start;
 let time = "";
 let progress = "";
